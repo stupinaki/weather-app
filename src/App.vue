@@ -1,27 +1,169 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" />
-  <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
+  <div>
+    <div class="btn-wrapper">
+      <button @click="toggle" class="btn">{{ btnSymbol }}</button>
+    </div>
+    <SettingBlock
+      v-if="isSettingBlockOpen"
+      :cities="favoriteCities"
+      :error-message="errorMessage"
+      @add-new-city="onAddNewCity"
+      @delete-city="onDeleteCity"
+    />
+    <div v-else>
+      <div v-if="isLoading" class="loader">
+        <h2>Wait a minute. We are getting data...</h2>
+      </div>
+      <WeatherList v-else :weather-data="weatherData" />
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
+import { errorTypes } from "./constants/errorTypes";
+import { localStorageConst } from "./constants/localStorage";
 import { defineComponent } from "vue";
-import HelloWorld from "./components/HelloWorld.vue";
+import { isCityPresent } from "./helpers/isCityPresent";
+import { getGeolocation } from "./helpers/getGeolocation";
+import { getWeatherData } from "./helpers/getWeatherData";
+import { fetchCityByName } from "./api/fetchCityByName";
+import { fetchCityByCoordinates } from "./api/fetchCityByCoordinates";
+import {
+  getDataFromLocalStorage,
+  addDataToLocalStorage,
+} from "./helpers/localStorage";
+import { TCity } from "@/types/TCity";
+import { TWeather } from "@/types/TWeather";
+import WeatherList from "@/components/weather/WeatherList.vue";
+import SettingBlock from "@/components/settings/SettingBlock.vue";
+
+interface IAppData {
+  weatherData: TWeather[];
+  favoriteCities: TCity[];
+  errorMessage: string;
+  isLoading: boolean;
+  isSettingBlockOpen: boolean;
+}
 
 export default defineComponent({
   name: "App",
   components: {
-    HelloWorld,
+    SettingBlock,
+    WeatherList,
+  },
+  data(): IAppData {
+    return {
+      weatherData: [],
+      favoriteCities: [],
+      errorMessage: "",
+      isLoading: false,
+      isSettingBlockOpen: false,
+    };
+  },
+  beforeMount() {
+    this.getAllData();
+  },
+  watch: {
+    async "favoriteCities.length"() {
+      addDataToLocalStorage(
+        localStorageConst.CITIES,
+        this.$data.favoriteCities
+      );
+      await this.getWeatherData();
+    },
+  },
+  computed: {
+    btnSymbol(): string {
+      return this.$data.isSettingBlockOpen ? "×" : "⚙";
+    },
+  },
+  methods: {
+    toggle(): void {
+      this.$data.isSettingBlockOpen = !this.$data.isSettingBlockOpen;
+    },
+    onDeleteCity(cityName: string): void {
+      const { favoriteCities } = this.$data;
+      this.$data.favoriteCities = favoriteCities.filter(
+        (city) => city.city !== cityName
+      );
+    },
+    validateCity(cityData: TCity | null): boolean {
+      if (!cityData) {
+        this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
+        return false;
+      }
+      const isCityExist = isCityPresent(this.$data.favoriteCities, cityData);
+      if (isCityExist) {
+        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
+        return false;
+      }
+      this.$data.errorMessage = "";
+      return true;
+    },
+    async onAddNewCity(cityName: string) {
+      const { data: cityData } = await fetchCityByName(cityName);
+      const firstCity = cityData ? cityData[0] : null;
+      if (!firstCity) {
+        return;
+        //todo подумать над функцией validateCity + текст ошибки на кривой город
+      }
+      const isValidate = this.validateCity(firstCity);
+      if (isValidate) {
+        this.$data.favoriteCities.push(firstCity);
+      }
+    },
+    async initFavoritesCities() {
+      this.$data.isLoading = true;
+      this.$data.favoriteCities = getDataFromLocalStorage(
+        localStorageConst.CITIES
+      );
+
+      if (!this.$data.favoriteCities.length) {
+        const coordinates = await getGeolocation();
+        if (!coordinates) {
+          return;
+        }
+        const { data: cities } = await fetchCityByCoordinates(coordinates);
+        const first = cities ? cities[0] : null;
+        if (!first) {
+          return;
+        }
+        first && this.$data.favoriteCities.push(first);
+      }
+      this.$data.isLoading = false;
+    },
+    async getWeatherData() {
+      this.$data.isLoading = true;
+      this.$data.weatherData = await getWeatherData(this.$data.favoriteCities);
+      this.$data.isLoading = false;
+    },
+    async getAllData() {
+      await this.initFavoritesCities();
+      await this.getWeatherData();
+    },
   },
 });
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+<style scoped>
+.btn-wrapper {
+  display: flex;
+  justify-content: end;
+}
+.btn {
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 40px;
+  font-weight: bold;
+}
+.btn:hover {
+  transform: scale(1.1);
+}
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 </style>
