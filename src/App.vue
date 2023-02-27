@@ -87,30 +87,21 @@ export default defineComponent({
         (city) => city.city !== cityName
       );
     },
-    validateCity(cityData: TCity | null): boolean {
-      if (!cityData) {
-        this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
-        return false;
-      }
-      const isCityExist = isCityPresent(this.$data.favoriteCities, cityData);
-      if (isCityExist) {
-        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
-        return false;
-      }
-      this.$data.errorMessage = "";
-      return true;
-    },
     async onAddNewCity(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);
       const firstCity = cityData ? cityData[0] : null;
+
       if (!firstCity) {
+        this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
         return;
-        //todo подумать над функцией validateCity + текст ошибки на кривой город
       }
-      const isValidate = this.validateCity(firstCity);
-      if (isValidate) {
-        this.$data.favoriteCities.push(firstCity);
+      const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
+      if (isCityExist) {
+        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
+        return;
       }
+      this.$data.errorMessage = "";
+      this.$data.favoriteCities.push(firstCity);
     },
     async initFavoritesCities() {
       this.$data.isLoading = true;
@@ -128,7 +119,7 @@ export default defineComponent({
         if (!first) {
           return;
         }
-        first && this.$data.favoriteCities.push(first);
+        this.$data.favoriteCities.push(first);
       }
       this.$data.isLoading = false;
     },
