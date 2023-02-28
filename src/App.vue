@@ -9,6 +9,7 @@
       :error-message="errorMessage"
       @add-new-city="onAddNewCity"
       @delete-city="onDeleteCity"
+      @replace-city="onReplaceCity"
     />
     <div v-else>
       <div v-if="isLoading" class="loader">
@@ -36,6 +37,7 @@ import { TCity } from "@/types/TCity";
 import { TWeather } from "@/types/TWeather";
 import WeatherList from "@/components/weather/WeatherList.vue";
 import SettingBlock from "@/components/settings/SettingBlock.vue";
+import { MoveEvent } from "vuedraggable";
 
 interface IAppData {
   weatherData: TWeather[];
@@ -86,6 +88,10 @@ export default defineComponent({
       this.$data.favoriteCities = favoriteCities.filter(
         (city) => city.city !== cityName
       );
+    },
+    onReplaceCity(e: MoveEvent<HTMLDivElement>): void {
+      const { draggedContext } = e;
+      console.log("нужно поменять порядок городов!", draggedContext);
     },
     async onAddNewCity(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);

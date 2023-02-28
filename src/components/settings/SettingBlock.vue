@@ -15,27 +15,43 @@
       </div>
     </form>
 
-    <div class="plate-container">
-      <CityPlate
-        v-for="city in cities"
-        :key="city.city"
-        :city="city.city"
-        :country="city.country"
-        @delete-city="onDeleteCity"
-      />
-    </div>
+    <draggable
+      :list="cities"
+      :disabled="!enabled"
+      :move="checkMove"
+      item-key="city"
+      class="plate-container"
+      @start="dragging = true"
+      @end="dragging = false"
+    >
+      <template #item="{ element }">
+        <CityPlate
+          :city="element.city"
+          :country="element.country"
+          @delete-city="onDeleteCity"
+        />
+      </template>
+    </draggable>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import draggable, { MoveEvent } from "vuedraggable";
 import CityPlate from "@/components/settings/CityPlate.vue";
+
+interface IData {
+  enabled: boolean;
+  dragging: boolean;
+  newCityName: string;
+}
 
 export default defineComponent({
   name: "SettingBlock",
-  emits: ["addNewCity", "deleteCity"],
+  emits: ["addNewCity", "deleteCity", "replaceCity"],
   components: {
     CityPlate,
+    draggable,
   },
   props: {
     cities: {
@@ -48,9 +64,11 @@ export default defineComponent({
       default: "",
     },
   },
-  data() {
+  data(): IData {
     return {
       newCityName: "",
+      enabled: true,
+      dragging: false,
     };
   },
   methods: {
@@ -62,6 +80,9 @@ export default defineComponent({
     },
     onDeleteCity(cityName: string): void {
       this.$emit("deleteCity", cityName);
+    },
+    checkMove(e: MoveEvent<HTMLDivElement>): void {
+      this.$emit("replaceCity", e);
     },
   },
   computed: {
