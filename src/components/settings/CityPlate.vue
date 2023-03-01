@@ -1,9 +1,6 @@
 <template>
   <div class="plate">
-    <button class="btn">☰</button>
-    <div>
-      {{ fullName }}
-    </div>
+    <div>{{ fullName }}</div>
     <button class="btn" @click="onClick">🗑</button>
   </div>
 </template>

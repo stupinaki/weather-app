@@ -37,7 +37,6 @@ import { TCity } from "@/types/TCity";
 import { TWeather } from "@/types/TWeather";
 import WeatherList from "@/components/weather/WeatherList.vue";
 import SettingBlock from "@/components/settings/SettingBlock.vue";
-import { MoveEvent } from "vuedraggable";
 
 interface IAppData {
   weatherData: TWeather[];
@@ -89,11 +88,12 @@ export default defineComponent({
         (city) => city.city !== cityName
       );
     },
-    onReplaceCity(): void {
+    async onReplaceCity() {
       addDataToLocalStorage(
         localStorageConst.CITIES,
         this.$data.favoriteCities
       );
+      await this.getWeatherData();
     },
     async onAddNewCity(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);
@@ -120,6 +120,7 @@ export default defineComponent({
       if (!this.$data.favoriteCities.length) {
         const coordinates = await getGeolocation();
         if (!coordinates) {
+          this.$data.isLoading = false;
           return;
         }
         const { data: cities } = await fetchCityByCoordinates(coordinates);
