@@ -89,9 +89,11 @@ export default defineComponent({
         (city) => city.city !== cityName
       );
     },
-    onReplaceCity(e: MoveEvent<HTMLDivElement>): void {
-      const { draggedContext } = e;
-      console.log("нужно поменять порядок городов!", draggedContext);
+    onReplaceCity(): void {
+      addDataToLocalStorage(
+        localStorageConst.CITIES,
+        this.$data.favoriteCities
+      );
     },
     async onAddNewCity(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);

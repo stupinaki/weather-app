@@ -18,11 +18,11 @@
     <draggable
       :list="cities"
       :disabled="!enabled"
-      :move="checkMove"
       item-key="city"
+      ghost-class="ghost"
       class="plate-container"
-      @start="dragging = true"
-      @end="dragging = false"
+      @start="onStartDrag"
+      @end="onEndDrag"
     >
       <template #item="{ element }">
         <CityPlate
@@ -37,7 +37,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import draggable, { MoveEvent } from "vuedraggable";
+import draggable from "vuedraggable";
 import CityPlate from "@/components/settings/CityPlate.vue";
 
 interface IData {
@@ -81,8 +81,12 @@ export default defineComponent({
     onDeleteCity(cityName: string): void {
       this.$emit("deleteCity", cityName);
     },
-    checkMove(e: MoveEvent<HTMLDivElement>): void {
-      this.$emit("replaceCity", e);
+    onEndDrag(): void {
+      this.$data.dragging = false;
+      this.$emit("replaceCity");
+    },
+    onStartDrag(): void {
+      this.$data.dragging = true;
     },
   },
   computed: {
@@ -129,6 +133,9 @@ export default defineComponent({
 }
 .submit-btn:hover {
   cursor: pointer;
+  background-color: palegreen;
+}
+.ghost {
   background-color: palegreen;
 }
 </style>
