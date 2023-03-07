@@ -1,6 +1,6 @@
 <template>
   <div class="plate">
-    <div>{{ fullName }}</div>
+    <div>{{ cityId }}</div>
     <button class="btn" @click="onClick">🗑</button>
   </div>
 </template>
@@ -11,24 +11,14 @@ export default defineComponent({
   name: "CityPlate",
   emits: ["deleteCity"],
   props: {
-    city: {
+    cityId: {
       type: String,
       required: true,
-    },
-    country: {
-      type: String,
-      required: true,
-    },
-  },
-  computed: {
-    fullName(): string {
-      const { city, country } = this.$props;
-      return city + ", " + country;
     },
   },
   methods: {
     onClick(): void {
-      this.$emit("deleteCity", this.$props.city);
+      this.$emit("deleteCity", this.$props.cityId);
     },
   },
 });

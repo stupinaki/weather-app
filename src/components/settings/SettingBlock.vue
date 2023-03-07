@@ -1,17 +1,40 @@
 <template>
   <div class="settings">
+    <pre>citiesOptions: {{ citiesOptions }}</pre>
     <form @submit.prevent="addNewCity">
       <label for="addCity">
         <b> {{ labelText }} </b>
       </label>
-      <div class="input-btn-wrapper">
+      <div class="input-select-btn-wrapper">
         <input
           id="addCity"
           type="text"
           :class="inputStyle"
           v-model="newCityName"
         />
-        <button type="submit" class="submit-btn">Submit</button>
+        <button type="submit" class="submit-btn input-select-btn">
+          Submit
+        </button>
+        <div v-if="citiesOptions.length" class="select-wrapper">
+          <label v-if="!selectedOption" for="cities" class="select-label">
+            <b> we have found several options, choose the one of them </b>
+          </label>
+          <select
+            v-model="selectedOption"
+            name="cities"
+            id="cities"
+            class="input-select-btn"
+            @change="onChange"
+          >
+            <option
+              v-for="city in citiesOptions"
+              :key="city.id"
+              :value="city.id"
+            >
+              {{ city.id }}
+            </option>
+          </select>
+        </div>
       </div>
     </form>
 
@@ -25,11 +48,7 @@
       @end="onEndDrag"
     >
       <template #item="{ element }">
-        <CityPlate
-          :city="element.city"
-          :country="element.country"
-          @delete-city="onDeleteCity"
-        />
+        <CityPlate :city-id="element.id" @delete-city="onDeleteCity" />
       </template>
     </draggable>
   </div>
@@ -44,11 +63,12 @@ interface IData {
   enabled: boolean;
   dragging: boolean;
   newCityName: string;
+  selectedOption: string;
 }
 
 export default defineComponent({
   name: "SettingBlock",
-  emits: ["addNewCity", "deleteCity", "replaceCity"],
+  emits: ["addNewCity", "deleteCity", "replaceCity", "selectedCountry"],
   components: {
     CityPlate,
     draggable,
@@ -63,12 +83,17 @@ export default defineComponent({
       required: false,
       default: "",
     },
+    citiesOptions: {
+      type: Array,
+      required: true,
+    },
   },
   data(): IData {
     return {
       newCityName: "",
       enabled: true,
       dragging: false,
+      selectedOption: "",
     };
   },
   methods: {
@@ -78,8 +103,8 @@ export default defineComponent({
         this.$data.newCityName = "";
       }
     },
-    onDeleteCity(cityName: string): void {
-      this.$emit("deleteCity", cityName);
+    onDeleteCity(cityId: string): void {
+      this.$emit("deleteCity", cityId);
     },
     onEndDrag(): void {
       this.$data.dragging = false;
@@ -88,11 +113,16 @@ export default defineComponent({
     onStartDrag(): void {
       this.$data.dragging = true;
     },
+    onChange(): void {
+      this.$emit("selectedCountry", this.$data.selectedOption);
+    },
   },
   computed: {
     inputStyle(): string {
       const { errorMessage } = this.$props;
-      return errorMessage ? "input-error" : "input";
+      return errorMessage
+        ? "input-error input-select-btn"
+        : "input input-select-btn";
     },
     labelText(): string {
       return "Add city: " + this.$props.errorMessage;
@@ -112,12 +142,12 @@ export default defineComponent({
   flex-direction: column;
   gap: 12px;
 }
-.input-btn-wrapper {
+.input-select-btn-wrapper {
   display: grid;
   grid-template-columns: 4fr 1fr;
   gap: 8px;
 }
-.input-btn-wrapper > * {
+.input-select-btn {
   padding: 12px;
   border: none;
   border-radius: 16px;
@@ -137,5 +167,17 @@ export default defineComponent({
 }
 .ghost {
   background-color: palegreen;
+}
+.select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+.select-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 </style>

@@ -1,4 +1,5 @@
 export type TCity = {
+  id: string;
   city: string;
   country: string;
   coords: {

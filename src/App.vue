@@ -7,9 +7,11 @@
       v-if="isSettingBlockOpen"
       :cities="favoriteCities"
       :error-message="errorMessage"
-      @add-new-city="onAddNewCity"
+      :cities-options="citiesOptions"
+      @add-new-city="getNewCitiesOption"
       @delete-city="onDeleteCity"
       @replace-city="onReplaceCity"
+      @selected-country="addNewCity"
     />
     <div v-else>
       <div v-if="isLoading" class="loader">
@@ -41,6 +43,7 @@ import SettingBlock from "@/components/settings/SettingBlock.vue";
 interface IAppData {
   weatherData: TWeather[];
   favoriteCities: TCity[];
+  citiesOptions: TCity[];
   errorMessage: string;
   isLoading: boolean;
   isSettingBlockOpen: boolean;
@@ -56,6 +59,7 @@ export default defineComponent({
     return {
       weatherData: [],
       favoriteCities: [],
+      citiesOptions: [],
       errorMessage: "",
       isLoading: false,
       isSettingBlockOpen: false,
@@ -82,11 +86,28 @@ export default defineComponent({
     toggle(): void {
       this.$data.isSettingBlockOpen = !this.$data.isSettingBlockOpen;
     },
-    onDeleteCity(cityName: string): void {
+    onDeleteCity(cityId: string): void {
       const { favoriteCities } = this.$data;
       this.$data.favoriteCities = favoriteCities.filter(
-        (city) => city.city !== cityName
+        (city) => city.id !== cityId
       );
+    },
+    addNewCity(cityId: string): void {
+      const { citiesOptions } = this.$data;
+      const filteredCities = citiesOptions.filter(
+        (option) => option.id === cityId
+      );
+
+      const targetCity = filteredCities[0];
+      const isCityExist = isCityPresent(this.$data.favoriteCities, targetCity);
+
+      if (isCityExist) {
+        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
+        return;
+      }
+
+      this.$data.favoriteCities.push(targetCity);
+      this.$data.citiesOptions = [];
     },
     async onReplaceCity() {
       addDataToLocalStorage(
@@ -95,21 +116,16 @@ export default defineComponent({
       );
       await this.getWeatherData();
     },
-    async onAddNewCity(cityName: string) {
+    async getNewCitiesOption(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);
-      const firstCity = cityData ? cityData[0] : null;
 
-      if (!firstCity) {
+      if (!cityData) {
         this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
         return;
       }
-      const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
-      if (isCityExist) {
-        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
-        return;
-      }
+
+      this.$data.citiesOptions = cityData;
       this.$data.errorMessage = "";
-      this.$data.favoriteCities.push(firstCity);
     },
     async initFavoritesCities() {
       this.$data.isLoading = true;
