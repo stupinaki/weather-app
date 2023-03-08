@@ -11,6 +11,8 @@
           :class="inputStyle"
           v-model="newCityName"
           @input="findNewCities"
+          @focus="onFocus"
+          @blur="isFocus = false"
         />
         <button type="submit" class="submit-btn">Submit</button>
 
@@ -37,7 +39,7 @@
       item-key="city"
       ghost-class="ghost"
       class="plate-container"
-      @start="onStartDrag"
+      @start="dragging = true"
       @end="onEndDrag"
     >
       <template #item="{ element }">
@@ -53,10 +55,10 @@ import draggable from "vuedraggable";
 import CityPlate from "@/components/settings/CityPlate.vue";
 
 interface IData {
+  isFocus: boolean;
   enabled: boolean;
   dragging: boolean;
   newCityName: string;
-  selectedOption: string;
 }
 
 export default defineComponent({
@@ -89,22 +91,26 @@ export default defineComponent({
   },
   data(): IData {
     return {
-      newCityName: "",
       enabled: true,
       dragging: false,
-      selectedOption: "",
+      isFocus: false,
+      newCityName: "",
     };
   },
   methods: {
+    findNewCities(): void {
+      if (this.$data.newCityName) {
+        this.$emit("findNewCities", this.$data.newCityName);
+      }
+    },
+    addCityAndCountry(id: string): void {
+      this.$emit("addCityAndCountry", id);
+      this.$data.newCityName = "";
+    },
     addFirstCity(): void {
       if (this.$data.newCityName) {
         this.$emit("addFirstCity", this.$data.newCityName);
         this.$data.newCityName = "";
-      }
-    },
-    findNewCities(): void {
-      if (this.$data.newCityName) {
-        this.$emit("findNewCities", this.$data.newCityName);
       }
     },
     onDeleteCity(cityId: string): void {
@@ -114,12 +120,9 @@ export default defineComponent({
       this.$data.dragging = false;
       this.$emit("replaceCity");
     },
-    onStartDrag(): void {
-      this.$data.dragging = true;
-    },
-    addCityAndCountry(id: string): void {
-      this.$emit("addCityAndCountry", id);
-      this.$data.newCityName = "";
+    onFocus(e): void {
+      e.target.select();
+      this.$data.isFocus = true;
     },
   },
   computed: {
@@ -127,6 +130,9 @@ export default defineComponent({
       return this.$props.errorMessage ? "input-error input" : "input";
     },
     labelText(): string {
+      if (this.$data.isFocus) {
+        return "Add city:";
+      }
       return "Add city: " + this.$props.errorMessage;
     },
   },

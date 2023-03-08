@@ -26,11 +26,12 @@
 <script lang="ts">
 import { errorTypes } from "./constants/errorTypes";
 import { localStorageConst } from "./constants/localStorage";
-import { defineComponent } from "vue";
 import { isCityPresent } from "./helpers/isCityPresent";
 import { getGeolocation } from "./helpers/getGeolocation";
 import { getWeatherData } from "./helpers/getWeatherData";
 import { fetchCityByName } from "./api/fetchCityByName";
+import { defineComponent } from "vue";
+import { removeDuplicates } from "@/helpers/removeDuplicates";
 import { fetchCityByCoordinates } from "./api/fetchCityByCoordinates";
 import {
   getDataFromLocalStorage,
@@ -98,7 +99,6 @@ export default defineComponent({
       const filteredCities = citiesOptions.filter(
         (option) => option.id === cityId
       );
-
       const targetCity = filteredCities[0];
       const isCityExist = isCityPresent(this.$data.favoriteCities, targetCity);
 
@@ -106,7 +106,6 @@ export default defineComponent({
         this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
         return;
       }
-
       this.$data.favoriteCities.push(targetCity);
       this.$data.citiesOptions = [];
     },
@@ -114,6 +113,10 @@ export default defineComponent({
       const { citiesOptions } = this.$data;
       const firstCity = citiesOptions[0];
 
+      if (!citiesOptions.length) {
+        this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
+        return;
+      }
       const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
 
       if (isCityExist) {
@@ -133,13 +136,12 @@ export default defineComponent({
     },
     async getNewCitiesOption(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);
-
-      if (!cityData) {
+      if (!cityData.length) {
         this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
+        this.$data.citiesOptions = [];
         return;
       }
-
-      this.$data.citiesOptions = cityData;
+      this.$data.citiesOptions = removeDuplicates(cityData);
       this.$data.errorMessage = "";
     },
     async initFavoritesCities() {
