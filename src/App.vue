@@ -136,7 +136,7 @@ export default defineComponent({
     },
     async getNewCitiesOption(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);
-      if (!cityData.length) {
+      if (cityData === null) {
         this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
         this.$data.citiesOptions = [];
         return;

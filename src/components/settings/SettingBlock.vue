@@ -53,6 +53,7 @@
 import { defineComponent } from "vue";
 import draggable from "vuedraggable";
 import CityPlate from "@/components/settings/CityPlate.vue";
+import { IOnFocus } from "@/types/IApi";
 
 interface IData {
   isFocus: boolean;
@@ -120,8 +121,8 @@ export default defineComponent({
       this.$data.dragging = false;
       this.$emit("replaceCity");
     },
-    onFocus(e): void {
-      e.target.select();
+    onFocus(e: IOnFocus<HTMLInputElement>): void {
+      e.target?.select();
       this.$data.isFocus = true;
     },
   },
