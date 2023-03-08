@@ -7,9 +7,12 @@
       v-if="isSettingBlockOpen"
       :cities="favoriteCities"
       :error-message="errorMessage"
-      @add-new-city="onAddNewCity"
+      :cities-options="citiesOptions"
+      @find-new-cities="getNewCitiesOption"
       @delete-city="onDeleteCity"
       @replace-city="onReplaceCity"
+      @add-city-and-country="addNewCityWithCountry"
+      @add-first-city="addFirstCity"
     />
     <div v-else>
       <div v-if="isLoading" class="loader">
@@ -23,11 +26,12 @@
 <script lang="ts">
 import { errorTypes } from "./constants/errorTypes";
 import { localStorageConst } from "./constants/localStorage";
-import { defineComponent } from "vue";
 import { isCityPresent } from "./helpers/isCityPresent";
 import { getGeolocation } from "./helpers/getGeolocation";
 import { getWeatherData } from "./helpers/getWeatherData";
 import { fetchCityByName } from "./api/fetchCityByName";
+import { defineComponent } from "vue";
+import { removeDuplicates } from "@/helpers/removeDuplicates";
 import { fetchCityByCoordinates } from "./api/fetchCityByCoordinates";
 import {
   getDataFromLocalStorage,
@@ -41,6 +45,7 @@ import SettingBlock from "@/components/settings/SettingBlock.vue";
 interface IAppData {
   weatherData: TWeather[];
   favoriteCities: TCity[];
+  citiesOptions: TCity[];
   errorMessage: string;
   isLoading: boolean;
   isSettingBlockOpen: boolean;
@@ -56,6 +61,7 @@ export default defineComponent({
     return {
       weatherData: [],
       favoriteCities: [],
+      citiesOptions: [],
       errorMessage: "",
       isLoading: false,
       isSettingBlockOpen: false,
@@ -82,11 +88,44 @@ export default defineComponent({
     toggle(): void {
       this.$data.isSettingBlockOpen = !this.$data.isSettingBlockOpen;
     },
-    onDeleteCity(cityName: string): void {
+    onDeleteCity(cityId: string): void {
       const { favoriteCities } = this.$data;
       this.$data.favoriteCities = favoriteCities.filter(
-        (city) => city.city !== cityName
+        (city) => city.id !== cityId
       );
+    },
+    addNewCityWithCountry(cityId: string): void {
+      const { citiesOptions } = this.$data;
+      const filteredCities = citiesOptions.filter(
+        (option) => option.id === cityId
+      );
+      const targetCity = filteredCities[0];
+      const isCityExist = isCityPresent(this.$data.favoriteCities, targetCity);
+
+      if (isCityExist) {
+        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
+        return;
+      }
+      this.$data.favoriteCities.push(targetCity);
+      this.$data.citiesOptions = [];
+    },
+    addFirstCity(): void {
+      const { citiesOptions } = this.$data;
+      const firstCity = citiesOptions[0];
+
+      if (!citiesOptions.length) {
+        this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
+        return;
+      }
+      const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
+
+      if (isCityExist) {
+        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
+        return;
+      }
+
+      this.$data.favoriteCities.push(firstCity);
+      this.$data.citiesOptions = [];
     },
     async onReplaceCity() {
       addDataToLocalStorage(
@@ -95,21 +134,15 @@ export default defineComponent({
       );
       await this.getWeatherData();
     },
-    async onAddNewCity(cityName: string) {
+    async getNewCitiesOption(cityName: string) {
       const { data: cityData } = await fetchCityByName(cityName);
-      const firstCity = cityData ? cityData[0] : null;
-
-      if (!firstCity) {
+      if (!cityData.length) {
         this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
+        this.$data.citiesOptions = [];
         return;
       }
-      const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
-      if (isCityExist) {
-        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
-        return;
-      }
+      this.$data.citiesOptions = removeDuplicates(cityData);
       this.$data.errorMessage = "";
-      this.$data.favoriteCities.push(firstCity);
     },
     async initFavoritesCities() {
       this.$data.isLoading = true;

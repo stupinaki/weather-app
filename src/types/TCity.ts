@@ -1,4 +1,5 @@
 export type TCity = {
+  id: string;
   city: string;
   country: string;
   coords: {
@@ -7,6 +8,7 @@ export type TCity = {
   };
 };
 export type TApiCity = {
+  id: string;
   name: string;
   lat: number;
   lon: number;

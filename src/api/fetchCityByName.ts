@@ -6,7 +6,7 @@ import { createNewCityByCurrentPosition } from "@/helpers/createNewCityByCurrent
 export async function fetchCityByName(
   cityName: string
 ): Promise<IResponse<TCity[]>> {
-  const url = `http://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${apiKey.KEY}`;
+  const url = `http://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=100&appid=${apiKey.KEY}`;
 
   try {
     const result = await fetch(url);

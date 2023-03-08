@@ -1,6 +1,6 @@
 <template>
   <div class="settings">
-    <form @submit.prevent="addNewCity">
+    <form @submit.prevent="addFirstCity">
       <label for="addCity">
         <b> {{ labelText }} </b>
       </label>
@@ -10,8 +10,26 @@
           type="text"
           :class="inputStyle"
           v-model="newCityName"
+          @input="findNewCities"
+          @focus="onFocus"
+          @blur="isFocus = false"
         />
         <button type="submit" class="submit-btn">Submit</button>
+
+        <div v-if="citiesOptions.length > 0">
+          <h3>Perhaps you are looking for:</h3>
+          <div class="options">
+            <button
+              v-for="city in citiesOptions"
+              :key="city.id"
+              class="option"
+              type="submit"
+              @click="addCityAndCountry(city.id)"
+            >
+              {{ city.id }}
+            </button>
+          </div>
+        </div>
       </div>
     </form>
 
@@ -21,15 +39,11 @@
       item-key="city"
       ghost-class="ghost"
       class="plate-container"
-      @start="onStartDrag"
+      @start="dragging = true"
       @end="onEndDrag"
     >
       <template #item="{ element }">
-        <CityPlate
-          :city="element.city"
-          :country="element.country"
-          @delete-city="onDeleteCity"
-        />
+        <CityPlate :city-id="element.id" @delete-city="onDeleteCity" />
       </template>
     </draggable>
   </div>
@@ -41,6 +55,7 @@ import draggable from "vuedraggable";
 import CityPlate from "@/components/settings/CityPlate.vue";
 
 interface IData {
+  isFocus: boolean;
   enabled: boolean;
   dragging: boolean;
   newCityName: string;
@@ -48,7 +63,13 @@ interface IData {
 
 export default defineComponent({
   name: "SettingBlock",
-  emits: ["addNewCity", "deleteCity", "replaceCity"],
+  emits: [
+    "deleteCity",
+    "replaceCity",
+    "addFirstCity",
+    "findNewCities",
+    "addCityAndCountry",
+  ],
   components: {
     CityPlate,
     draggable,
@@ -63,38 +84,55 @@ export default defineComponent({
       required: false,
       default: "",
     },
+    citiesOptions: {
+      type: Array,
+      required: true,
+    },
   },
   data(): IData {
     return {
-      newCityName: "",
       enabled: true,
       dragging: false,
+      isFocus: false,
+      newCityName: "",
     };
   },
   methods: {
-    addNewCity(): void {
+    findNewCities(): void {
       if (this.$data.newCityName) {
-        this.$emit("addNewCity", this.$data.newCityName);
+        this.$emit("findNewCities", this.$data.newCityName);
+      }
+    },
+    addCityAndCountry(id: string): void {
+      this.$emit("addCityAndCountry", id);
+      this.$data.newCityName = "";
+    },
+    addFirstCity(): void {
+      if (this.$data.newCityName) {
+        this.$emit("addFirstCity", this.$data.newCityName);
         this.$data.newCityName = "";
       }
     },
-    onDeleteCity(cityName: string): void {
-      this.$emit("deleteCity", cityName);
+    onDeleteCity(cityId: string): void {
+      this.$emit("deleteCity", cityId);
     },
     onEndDrag(): void {
       this.$data.dragging = false;
       this.$emit("replaceCity");
     },
-    onStartDrag(): void {
-      this.$data.dragging = true;
+    onFocus(e): void {
+      e.target.select();
+      this.$data.isFocus = true;
     },
   },
   computed: {
     inputStyle(): string {
-      const { errorMessage } = this.$props;
-      return errorMessage ? "input-error" : "input";
+      return this.$props.errorMessage ? "input-error input" : "input";
     },
     labelText(): string {
+      if (this.$data.isFocus) {
+        return "Add city:";
+      }
       return "Add city: " + this.$props.errorMessage;
     },
   },
@@ -117,19 +155,20 @@ export default defineComponent({
   grid-template-columns: 4fr 1fr;
   gap: 8px;
 }
-.input-btn-wrapper > * {
+.input {
+  padding: 12px 12px 12px 20px;
+  border-radius: 16px;
+  border: 1px solid #bcbcbc;
+  box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
+}
+.input-error {
+  border: 1px solid #b41717;
+}
+.submit-btn {
   padding: 12px;
   border: none;
   border-radius: 16px;
   box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
-}
-.input {
-  border: 1px solid #bcbcbc;
-  box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
-  padding-left: 20px;
-}
-.input-error {
-  border: 1px solid #b41717;
 }
 .submit-btn:hover {
   cursor: pointer;
@@ -137,5 +176,21 @@ export default defineComponent({
 }
 .ghost {
   background-color: palegreen;
+}
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.option {
+  padding: 12px;
+  box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
+  border-radius: 16px;
+  background-color: palegreen;
+  cursor: pointer;
+  border: none;
+}
+.option:hover {
+  background-color: transparent;
 }
 </style>
