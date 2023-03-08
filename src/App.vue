@@ -8,10 +8,11 @@
       :cities="favoriteCities"
       :error-message="errorMessage"
       :cities-options="citiesOptions"
-      @add-new-city="getNewCitiesOption"
+      @find-new-cities="getNewCitiesOption"
       @delete-city="onDeleteCity"
       @replace-city="onReplaceCity"
-      @selected-country="addNewCity"
+      @add-city-and-country="addNewCityWithCountry"
+      @add-first-city="addFirstCity"
     />
     <div v-else>
       <div v-if="isLoading" class="loader">
@@ -92,7 +93,7 @@ export default defineComponent({
         (city) => city.id !== cityId
       );
     },
-    addNewCity(cityId: string): void {
+    addNewCityWithCountry(cityId: string): void {
       const { citiesOptions } = this.$data;
       const filteredCities = citiesOptions.filter(
         (option) => option.id === cityId
@@ -107,6 +108,20 @@ export default defineComponent({
       }
 
       this.$data.favoriteCities.push(targetCity);
+      this.$data.citiesOptions = [];
+    },
+    addFirstCity(): void {
+      const { citiesOptions } = this.$data;
+      const firstCity = citiesOptions[0];
+
+      const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
+
+      if (isCityExist) {
+        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
+        return;
+      }
+
+      this.$data.favoriteCities.push(firstCity);
       this.$data.citiesOptions = [];
     },
     async onReplaceCity() {
