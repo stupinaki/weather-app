@@ -4,7 +4,7 @@
       <label for="addCity">
         <b> {{ labelText }} </b>
       </label>
-      <div class="input-select-btn-wrapper">
+      <div class="input-btn-wrapper">
         <input
           id="addCity"
           type="text"
@@ -12,12 +12,10 @@
           v-model="newCityName"
           @input="findNewCities"
         />
-        <button type="submit" class="submit-btn input-select-btn">
-          Submit
-        </button>
+        <button type="submit" class="submit-btn">Submit</button>
 
         <div v-if="citiesOptions.length > 0">
-          <h2>Perhaps you are looking for</h2>
+          <h3>Perhaps you are looking for:</h3>
           <div class="options">
             <button
               v-for="city in citiesOptions"
@@ -126,10 +124,7 @@ export default defineComponent({
   },
   computed: {
     inputStyle(): string {
-      const { errorMessage } = this.$props;
-      return errorMessage
-        ? "input-error input-select-btn"
-        : "input input-select-btn";
+      return this.$props.errorMessage ? "input-error input" : "input";
     },
     labelText(): string {
       return "Add city: " + this.$props.errorMessage;
@@ -149,24 +144,25 @@ export default defineComponent({
   flex-direction: column;
   gap: 12px;
 }
-.input-select-btn-wrapper {
+.input-btn-wrapper {
   display: grid;
   grid-template-columns: 4fr 1fr;
   gap: 8px;
 }
-.input-select-btn {
+.input {
+  padding: 12px 12px 12px 20px;
+  border-radius: 16px;
+  border: 1px solid #bcbcbc;
+  box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
+}
+.input-error {
+  border: 1px solid #b41717;
+}
+.submit-btn {
   padding: 12px;
   border: none;
   border-radius: 16px;
   box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
-}
-.input {
-  border: 1px solid #bcbcbc;
-  box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
-  padding-left: 20px;
-}
-.input-error {
-  border: 1px solid #b41717;
 }
 .submit-btn:hover {
   cursor: pointer;
@@ -183,8 +179,12 @@ export default defineComponent({
 .option {
   padding: 12px;
   box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
-  border-radius: 12px;
+  border-radius: 16px;
   background-color: palegreen;
   cursor: pointer;
+  border: none;
+}
+.option:hover {
+  background-color: transparent;
 }
 </style>
