@@ -21,7 +21,7 @@ export type TWeather = {
   wind: {
     speed: number;
   };
-  type: {
+  sys: {
     country: string;
   };
   city: string;

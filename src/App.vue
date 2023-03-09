@@ -8,11 +8,11 @@
       :cities="favoriteCities"
       :error-message="errorMessage"
       :cities-options="citiesOptions"
-      @find-new-cities="getNewCitiesOption"
       @delete-city="onDeleteCity"
       @replace-city="onReplaceCity"
-      @add-city-and-country="addNewCityWithCountry"
       @add-first-city="addFirstCity"
+      @find-new-cities="getNewCitiesOption"
+      @add-city-and-country="addNewCityWithCountry"
     />
     <div v-else>
       <div v-if="isLoading" class="loader">
@@ -41,6 +41,7 @@ import { TCity } from "@/types/TCity";
 import { TWeather } from "@/types/TWeather";
 import WeatherList from "@/components/weather/WeatherList.vue";
 import SettingBlock from "@/components/settings/SettingBlock.vue";
+import { replaceWeatherData } from "@/helpers/replaceWeatherData";
 
 interface IAppData {
   weatherData: TWeather[];
@@ -54,21 +55,22 @@ interface IAppData {
 export default defineComponent({
   name: "App",
   components: {
-    SettingBlock,
     WeatherList,
+    SettingBlock,
   },
   data(): IAppData {
     return {
-      weatherData: [],
-      favoriteCities: [],
-      citiesOptions: [],
-      errorMessage: "",
       isLoading: false,
+      weatherData: [],
+      errorMessage: "",
+      citiesOptions: [],
+      favoriteCities: [],
       isSettingBlockOpen: false,
     };
   },
-  beforeMount() {
-    this.getAllData();
+  async beforeMount() {
+    await this.initFavoritesCities();
+    await this.getWeatherData();
   },
   watch: {
     async "favoriteCities.length"() {
@@ -88,11 +90,33 @@ export default defineComponent({
     toggle(): void {
       this.$data.isSettingBlockOpen = !this.$data.isSettingBlockOpen;
     },
+    addFirstCity(): void {
+      const { citiesOptions } = this.$data;
+
+      if (!citiesOptions.length) {
+        this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
+        return;
+      }
+      const firstCity = citiesOptions[0];
+      const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
+
+      if (isCityExist) {
+        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
+        return;
+      }
+      this.$data.favoriteCities.push(firstCity);
+      this.$data.citiesOptions = [];
+    },
     onDeleteCity(cityId: string): void {
       const { favoriteCities } = this.$data;
       this.$data.favoriteCities = favoriteCities.filter(
         (city) => city.id !== cityId
       );
+    },
+    onReplaceCity(): void {
+      const { weatherData, favoriteCities } = this.$data;
+      addDataToLocalStorage(localStorageConst.CITIES, favoriteCities);
+      this.$data.weatherData = replaceWeatherData(weatherData, favoriteCities);
     },
     addNewCityWithCountry(cityId: string): void {
       const { citiesOptions } = this.$data;
@@ -109,70 +133,46 @@ export default defineComponent({
       this.$data.favoriteCities.push(targetCity);
       this.$data.citiesOptions = [];
     },
-    addFirstCity(): void {
-      const { citiesOptions } = this.$data;
-      const firstCity = citiesOptions[0];
-
-      if (!citiesOptions.length) {
-        this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
-        return;
-      }
-      const isCityExist = isCityPresent(this.$data.favoriteCities, firstCity);
-
-      if (isCityExist) {
-        this.$data.errorMessage = errorTypes.CITY_ALREADY_EXIST;
-        return;
-      }
-
-      this.$data.favoriteCities.push(firstCity);
-      this.$data.citiesOptions = [];
-    },
-    async onReplaceCity() {
-      addDataToLocalStorage(
-        localStorageConst.CITIES,
-        this.$data.favoriteCities
-      );
-      await this.getWeatherData();
-    },
     async getNewCitiesOption(cityName: string) {
+      this.$data.isLoading = true;
       const { data: cityData } = await fetchCityByName(cityName);
+
       if (cityData === null) {
         this.$data.errorMessage = errorTypes.CITY_NOT_FOUND;
         this.$data.citiesOptions = [];
+        this.$data.isLoading = false;
         return;
       }
       this.$data.citiesOptions = removeDuplicates(cityData);
       this.$data.errorMessage = "";
+      this.$data.isLoading = false;
     },
     async initFavoritesCities() {
       this.$data.isLoading = true;
       this.$data.favoriteCities = getDataFromLocalStorage(
         localStorageConst.CITIES
       );
-
-      if (!this.$data.favoriteCities.length) {
-        const coordinates = await getGeolocation();
-        if (!coordinates) {
-          this.$data.isLoading = false;
-          return;
-        }
-        const { data: cities } = await fetchCityByCoordinates(coordinates);
-        const first = cities ? cities[0] : null;
-        if (!first) {
-          return;
-        }
-        this.$data.favoriteCities.push(first);
+      if (this.$data.favoriteCities.length > 0) {
+        this.$data.isLoading = false;
+        return;
       }
-      this.$data.isLoading = false;
+      const coordinates = await getGeolocation();
+      if (!coordinates) {
+        this.$data.isLoading = false;
+        return;
+      }
+      const { data: cities } = await fetchCityByCoordinates(coordinates);
+      const first = cities ? cities[0] : null;
+      if (!first) {
+        this.$data.isLoading = false;
+        return;
+      }
+      this.$data.favoriteCities.push(first);
     },
     async getWeatherData() {
       this.$data.isLoading = true;
       this.$data.weatherData = await getWeatherData(this.$data.favoriteCities);
       this.$data.isLoading = false;
-    },
-    async getAllData() {
-      await this.initFavoritesCities();
-      await this.getWeatherData();
     },
   },
 });
