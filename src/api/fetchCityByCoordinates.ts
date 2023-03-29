@@ -8,7 +8,7 @@ export async function fetchCityByCoordinates(
   coordinates: TCoordinates
 ): Promise<IResponse<TCity[]>> {
   const { longitude, latitude } = coordinates;
-  const url = `http://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${apiKey.KEY}`;
+  const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${apiKey.KEY}`;
 
   try {
     const result = await fetch(url);
