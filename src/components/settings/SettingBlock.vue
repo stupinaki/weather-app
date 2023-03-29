@@ -155,9 +155,18 @@ export default defineComponent({
   display: grid;
   grid-template-columns: 4fr 1fr;
   gap: 8px;
+  margin: 12px 0;
+}
+@media screen and (max-width: 600px) {
+  .input-btn-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 }
 .input {
-  padding: 12px 12px 12px 20px;
+  font-size: 16px;
+  padding: 16px 16px 16px 20px;
   border-radius: 16px;
   border: 1px solid #bcbcbc;
   box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
@@ -166,7 +175,8 @@ export default defineComponent({
   border: 1px solid #b41717;
 }
 .submit-btn {
-  padding: 12px;
+  font-size: 16px;
+  padding: 16px;
   border: none;
   border-radius: 16px;
   box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
