@@ -11,14 +11,14 @@
       <div class="temperature">{{ mainTemperature }}</div>
     </div>
 
-    <div class="feels-details">Feels like: {{ feelTemperature }}.</div>
+    <div class="feels-details"><b> Feels like: </b> {{ feelTemperature }}.</div>
 
     <div class="main-details">
-      <div>Sky: {{ sky }}</div>
-      <div>Pressure: {{ pressure }} hPa</div>
-      <div>Humidity: {{ humidity }}%</div>
-      <div>Visibility: {{ visibilityKM }}</div>
-      <div>Wind speed: {{ windSpeed }} meter/sec</div>
+      <div><b> Sky: </b> {{ sky }}</div>
+      <div><b> Pressure: </b> {{ pressure }} hPa</div>
+      <div><b> Humidity: </b> {{ humidity }}%</div>
+      <div><b> Visibility: </b> {{ visibilityKM }}</div>
+      <div><b> Wind speed:</b> {{ windSpeed }} meter/sec</div>
     </div>
   </div>
 </template>
@@ -98,7 +98,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background-color: #ebeeee;
+  background-color: palegreen;
   padding: 20px;
   border-radius: 16px;
   box-shadow: 1px 8px 12px #3a3c4c14, 1px 1px 2px #3a3c4c0a;
