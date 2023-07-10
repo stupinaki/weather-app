@@ -10,7 +10,7 @@
           type="text"
           :class="inputStyle"
           v-model="newCityName"
-          @input="findNewCities"
+          @input="debounceFindNewCities"
           @focus="onFocus"
           @blur="isFocus = false"
         />
@@ -54,6 +54,7 @@ import { defineComponent } from "vue";
 import draggable from "vuedraggable";
 import CityPlate from "@/components/settings/CityPlate.vue";
 import { IOnFocus } from "@/types/IApi";
+import debounce from "lodash/debounce";
 
 interface IData {
   isFocus: boolean;
@@ -104,6 +105,9 @@ export default defineComponent({
         this.$emit("findNewCities", this.$data.newCityName);
       }
     },
+    debounceFindNewCities: debounce(function () {
+      this.findNewCities();
+    }, 500),
     addCityAndCountry(id: string): void {
       this.$emit("addCityAndCountry", id);
       this.$data.newCityName = "";

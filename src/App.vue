@@ -52,6 +52,10 @@ interface IAppData {
   isSettingBlockOpen: boolean;
 }
 
+interface ICity {
+  id: string;
+}
+
 export default defineComponent({
   name: "App",
   components: {
@@ -110,7 +114,7 @@ export default defineComponent({
     onDeleteCity(cityId: string): void {
       const { favoriteCities } = this.$data;
       this.$data.favoriteCities = favoriteCities.filter(
-        (city) => city.id !== cityId
+        (city: ICity) => city.id !== cityId
       );
     },
     onReplaceCity(): void {
@@ -121,7 +125,7 @@ export default defineComponent({
     addNewCityWithCountry(cityId: string): void {
       const { citiesOptions } = this.$data;
       const filteredCities = citiesOptions.filter(
-        (option) => option.id === cityId
+        (option: ICity) => option.id === cityId
       );
       const targetCity = filteredCities[0];
       const isCityExist = isCityPresent(this.$data.favoriteCities, targetCity);
